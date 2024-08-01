@@ -37,6 +37,21 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const deleteTask = `-- name: DeleteTask :exec
+DELETE FROM "tasks"
+WHERE id = $1 AND user_id = $2
+`
+
+type DeleteTaskParams struct {
+	ID     int32
+	UserID int32
+}
+
+func (q *Queries) DeleteTask(ctx context.Context, arg DeleteTaskParams) error {
+	_, err := q.db.Exec(ctx, deleteTask, arg.ID, arg.UserID)
+	return err
+}
+
 const getTaskByID = `-- name: GetTaskByID :one
 SELECT id, title, description, is_completed, user_id, created_at, updated_at FROM "tasks"
 WHERE user_id = $1 AND id = $2

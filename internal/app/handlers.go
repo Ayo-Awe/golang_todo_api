@@ -197,3 +197,34 @@ func (a *Application) EditTask(w http.ResponseWriter, r *http.Request) {
 
 	render.Render(w, r, NewSuccessResponse(EditTaskResponse{*updatedTask}))
 }
+
+func (a *Application) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	user := a.getCtxUser(r)
+	rawID := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(rawID)
+	if err != nil {
+		render.Render(w, r, ErrResourceNotFound("Task not found"))
+		return
+	}
+
+	_, err = a.store.Tasks().GetTaskByID(r.Context(), user.ID, id)
+	if err != nil {
+		if errors.Is(err, ErrTaskNotFound) {
+			render.Render(w, r, ErrResourceNotFound("Task not found"))
+			return
+		}
+
+		render.Render(w, r, ErrInternalServerError("An unexpected error occured"))
+		slog.Error(err.Error())
+		return
+	}
+
+	if err := a.store.Tasks().DeleteTask(r.Context(), user.ID, id); err != nil {
+		render.Render(w, r, ErrInternalServerError("An unexpected error occured"))
+		slog.Error(err.Error())
+		return
+	}
+
+	render.NoContent(w, r)
+}

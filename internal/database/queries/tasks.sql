@@ -21,3 +21,7 @@ SET	title = $2,
 WHERE id = $1
 RETURNING *;
 
+
+-- name: DeleteTask :exec
+DELETE FROM "tasks"
+WHERE id = $1 AND user_id = $2;

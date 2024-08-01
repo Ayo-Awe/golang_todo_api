@@ -83,4 +83,5 @@ type TaskRepository interface {
 	UpdateTask(ctx context.Context, task *Task) (*Task, error)
 	CreateTask(ctx context.Context, task *Task) (*Task, error)
 	GetTasks(ctx context.Context, userID int, taskFilter TaskFilter, paging Paging) ([]Task, PaginationData, error)
+	DeleteTask(ctx context.Context, userID int, taskID int) error
 }

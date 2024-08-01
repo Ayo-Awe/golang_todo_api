@@ -117,3 +117,12 @@ func (repo *taskRepo) UpdateTask(ctx context.Context, task *app.Task) (*app.Task
 	return repo.toAppTask(&sqlcTask), nil
 
 }
+
+func (repo *taskRepo) DeleteTask(ctx context.Context, userID int, taskID int) error {
+	arg := sqlc.DeleteTaskParams{
+		UserID: int32(userID),
+		ID:     int32(taskID),
+	}
+
+	return repo.queries.DeleteTask(ctx, arg)
+}

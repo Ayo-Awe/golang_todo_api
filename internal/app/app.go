@@ -35,6 +35,7 @@ func (a *Application) buildRoutes() http.Handler {
 		r.Post("/", a.CreateTask)
 		r.With(a.Paginate).Get("/", a.GetTasks)
 		r.Patch("/{id}", a.EditTask)
+		r.Delete("/{id}", a.DeleteTask)
 	})
 
 	r.Mount("/api", api)
