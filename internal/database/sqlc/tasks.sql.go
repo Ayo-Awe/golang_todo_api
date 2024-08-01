@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createTask = `-- name: CreateTask :one
@@ -33,4 +35,51 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getTasks = `-- name: GetTasks :many
+SELECT id, title, description, is_completed, user_id, created_at, updated_at FROM "tasks"
+WHERE user_id = $1 AND id <= $2 AND (is_completed = $3 OR $3 IS NULL)
+ORDER BY id DESC
+LIMIT $4
+`
+
+type GetTasksParams struct {
+	UserID      int32
+	Cursor      int32
+	IsCompleted pgtype.Bool
+	Limit       int32
+}
+
+func (q *Queries) GetTasks(ctx context.Context, arg GetTasksParams) ([]Task, error) {
+	rows, err := q.db.Query(ctx, getTasks,
+		arg.UserID,
+		arg.Cursor,
+		arg.IsCompleted,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.IsCompleted,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

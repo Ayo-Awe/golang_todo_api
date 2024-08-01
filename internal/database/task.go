@@ -5,7 +5,9 @@ import (
 
 	"github.com/ayo-awe/golang_todo_api/internal/app"
 	"github.com/ayo-awe/golang_todo_api/internal/database/sqlc"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"gopkg.in/guregu/null.v4"
 )
 
 type taskRepo struct {
@@ -33,7 +35,39 @@ func (repo *taskRepo) CreateTask(ctx context.Context, task *app.Task) (*app.Task
 }
 
 func (repo *taskRepo) GetTasks(ctx context.Context, userID int, filter app.TaskFilter, paging app.Paging) ([]app.Task, app.PaginationData, error) {
-	return []app.Task{}, app.PaginationData{}, nil
+	arg := sqlc.GetTasksParams{
+		UserID:      int32(userID),
+		Cursor:      int32(paging.Cursor),
+		Limit:       int32(paging.Limit()),
+		IsCompleted: pgtype.Bool(filter.IsCompleted.NullBool),
+	}
+
+	sqlcTasks, err := repo.queries.GetTasks(ctx, arg)
+	if err != nil {
+		return nil, app.PaginationData{}, err
+	}
+
+	tasks := make([]app.Task, len(sqlcTasks))
+	for i, sqlcTask := range sqlcTasks {
+		tasks[i] = *repo.toAppTask(&sqlcTask)
+	}
+
+	var nextCursor null.Int
+	if len(tasks) == paging.Limit() {
+		lastIndex := len(tasks) - 1
+		last := tasks[lastIndex]
+
+		nextCursor = null.IntFrom(int64(last.ID))
+		tasks = tasks[:lastIndex]
+	}
+
+	paginationData := app.PaginationData{
+		NextCursor: nextCursor,
+		ItemCount:  len(tasks),
+		PerPage:    paging.PerPage,
+	}
+
+	return tasks, paginationData, nil
 }
 
 func (repo *taskRepo) toAppTask(sqlcTask *sqlc.Task) *app.Task {

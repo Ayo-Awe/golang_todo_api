@@ -53,14 +53,18 @@ type TaskFilter struct {
 }
 
 type PaginationData struct {
-	NextCursor int `json:"next_cursor"`
-	ItemCount  int `json:"item_count"`
-	PerPage    int `json:"per_page"`
+	NextCursor null.Int `json:"next_cursor"`
+	ItemCount  int      `json:"item_count"`
+	PerPage    int      `json:"per_page"`
 }
 
 type Paging struct {
 	Cursor  int
 	PerPage int
+}
+
+func (p Paging) Limit() int {
+	return p.PerPage + 1
 }
 
 type Store interface {

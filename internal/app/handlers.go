@@ -119,7 +119,7 @@ func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := strconv.Atoi(rawCursor)
 	if err != nil {
-		cursor = 1_000_000_000_000
+		cursor = 2_147_483_647
 	}
 
 	var isCompleted null.Bool
