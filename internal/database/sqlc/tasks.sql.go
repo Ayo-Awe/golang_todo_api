@@ -37,6 +37,31 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	return i, err
 }
 
+const getTaskByID = `-- name: GetTaskByID :one
+SELECT id, title, description, is_completed, user_id, created_at, updated_at FROM "tasks"
+WHERE user_id = $1 AND id = $2
+`
+
+type GetTaskByIDParams struct {
+	UserID int32
+	ID     int32
+}
+
+func (q *Queries) GetTaskByID(ctx context.Context, arg GetTaskByIDParams) (Task, error) {
+	row := q.db.QueryRow(ctx, getTaskByID, arg.UserID, arg.ID)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.IsCompleted,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getTasks = `-- name: GetTasks :many
 SELECT id, title, description, is_completed, user_id, created_at, updated_at FROM "tasks"
 WHERE user_id = $1 AND id <= $2 AND (is_completed = $3 OR $3 IS NULL)
@@ -82,4 +107,41 @@ func (q *Queries) GetTasks(ctx context.Context, arg GetTasksParams) ([]Task, err
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateTask = `-- name: UpdateTask :one
+UPDATE "tasks"
+SET	title = $2,
+	description = $3,
+	is_completed = $4,
+	updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, title, description, is_completed, user_id, created_at, updated_at
+`
+
+type UpdateTaskParams struct {
+	ID          int32
+	Title       string
+	Description string
+	IsCompleted bool
+}
+
+func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTask,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.IsCompleted,
+	)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.IsCompleted,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

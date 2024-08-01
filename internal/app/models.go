@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -49,6 +50,13 @@ func ErrBadRequest(msg string) render.Renderer {
 		Status:     "error",
 		Message:    msg,
 		StatusCode: http.StatusBadRequest,
+	}
+}
+func ErrResourceNotFound(msg string) render.Renderer {
+	return &ErrorResponse{
+		Status:     "error",
+		Message:    msg,
+		StatusCode: http.StatusNotFound,
 	}
 }
 
@@ -136,4 +144,34 @@ type CreateTaskResponse struct {
 
 type GetTasksResponse struct {
 	Tasks []Task `json:"tasks"`
+}
+
+type EditTaskRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	IsCompleted *bool   `json:"is_completed"`
+}
+
+func (c *EditTaskRequest) Bind(r *http.Request) error { return nil }
+
+func (c *EditTaskRequest) Validate() error {
+	if c.Title != nil {
+		trimmed := strings.TrimSpace(*c.Title)
+		c.Title = &trimmed
+	}
+
+	if c.Description != nil {
+		trimmed := strings.TrimSpace(*c.Description)
+		c.Description = &trimmed
+	}
+
+	if c.Title != nil && len(*c.Title) < 1 {
+		return fmt.Errorf("title: field cannot be empty")
+	}
+
+	return nil
+}
+
+type EditTaskResponse struct {
+	Task Task `json:"task"`
 }

@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ayo-awe/golang_todo_api/internal/app"
 	"github.com/ayo-awe/golang_todo_api/internal/database/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gopkg.in/guregu/null.v4"
@@ -80,4 +82,38 @@ func (repo *taskRepo) toAppTask(sqlcTask *sqlc.Task) *app.Task {
 		CreatedAt:   sqlcTask.CreatedAt.Time,
 		UpdatedAt:   sqlcTask.UpdatedAt.Time,
 	}
+}
+
+func (repo *taskRepo) GetTaskByID(ctx context.Context, userID int, taskID int) (*app.Task, error) {
+	arg := sqlc.GetTaskByIDParams{
+		UserID: int32(userID),
+		ID:     int32(taskID),
+	}
+
+	sqlcTask, err := repo.queries.GetTaskByID(ctx, arg)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, app.ErrTaskNotFound
+		}
+		return nil, err
+	}
+
+	return repo.toAppTask(&sqlcTask), nil
+}
+
+func (repo *taskRepo) UpdateTask(ctx context.Context, task *app.Task) (*app.Task, error) {
+	arg := sqlc.UpdateTaskParams{
+		ID:          int32(task.ID),
+		Title:       task.Title,
+		Description: task.Description,
+		IsCompleted: task.IsCompleted,
+	}
+
+	sqlcTask, err := repo.queries.UpdateTask(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.toAppTask(&sqlcTask), nil
+
 }

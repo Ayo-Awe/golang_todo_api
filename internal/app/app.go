@@ -34,6 +34,7 @@ func (a *Application) buildRoutes() http.Handler {
 		r.Use(a.basicAuthMiddleware)
 		r.Post("/", a.CreateTask)
 		r.With(a.Paginate).Get("/", a.GetTasks)
+		r.Patch("/{id}", a.EditTask)
 	})
 
 	r.Mount("/api", api)

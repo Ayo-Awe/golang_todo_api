@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrUserNotFound = errors.New("user not found")
+	ErrTaskNotFound = errors.New("task not found")
 )
 
 type User struct {
@@ -78,6 +79,8 @@ type UserRepository interface {
 }
 
 type TaskRepository interface {
+	GetTaskByID(ctx context.Context, userID int, taskID int) (*Task, error)
+	UpdateTask(ctx context.Context, task *Task) (*Task, error)
 	CreateTask(ctx context.Context, task *Task) (*Task, error)
 	GetTasks(ctx context.Context, userID int, taskFilter TaskFilter, paging Paging) ([]Task, PaginationData, error)
 }

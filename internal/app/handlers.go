@@ -5,7 +5,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"gopkg.in/guregu/null.v4"
 )
@@ -139,4 +141,59 @@ func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	payload := NewSuccessResponse(GetTasksResponse{tasks}).WithPaginationData(paginationData)
 	render.Render(w, r, payload)
+}
+
+func (a *Application) EditTask(w http.ResponseWriter, r *http.Request) {
+	user := a.getCtxUser(r)
+	rawID := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(rawID)
+	if err != nil {
+		render.Render(w, r, ErrResourceNotFound("Task not found"))
+		return
+	}
+
+	task, err := a.store.Tasks().GetTaskByID(r.Context(), user.ID, id)
+	if err != nil {
+		if errors.Is(err, ErrTaskNotFound) {
+			render.Render(w, r, ErrResourceNotFound("Task not found"))
+			return
+		}
+
+		render.Render(w, r, ErrInternalServerError("An unexpected error occured"))
+		slog.Error(err.Error())
+		return
+	}
+
+	var requestBody EditTaskRequest
+	if err := render.Bind(r, &requestBody); err != nil {
+		render.Render(w, r, ErrBadRequest("Invalid request body"))
+		return
+	}
+
+	if err := requestBody.Validate(); err != nil {
+		render.Render(w, r, ErrBadRequest(err.Error()))
+		return
+	}
+
+	if requestBody.Title != nil {
+		task.Title = *requestBody.Title
+	}
+
+	if requestBody.Description != nil {
+		task.Description = *requestBody.Description
+	}
+
+	if requestBody.IsCompleted != nil {
+		task.IsCompleted = *requestBody.IsCompleted
+	}
+
+	updatedTask, err := a.store.Tasks().UpdateTask(r.Context(), task)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerError("An unexpected error occured"))
+		slog.Error(err.Error())
+		return
+	}
+
+	render.Render(w, r, NewSuccessResponse(EditTaskResponse{*updatedTask}))
 }
