@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/render"
@@ -12,7 +13,14 @@ import (
 
 type contextKey string
 
+const (
+	defaultPerPage = 20
+	maxPerPage     = 100
+	defaultCursor  = 2_147_483_647
+)
+
 const userContextKey contextKey = "user"
+const pagingContextKey contextKey = "paging"
 
 func (a *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +75,39 @@ func (a *Application) basicAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		r = a.setUserCtx(r, user)
+
+		if next != nil {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
+func (a *Application) Paginate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// get paging
+		rawCursor := r.URL.Query().Get("cursor")
+		rawPerPage := r.URL.Query().Get("per_page")
+
+		perPage, err := strconv.Atoi(rawPerPage)
+		if err != nil || perPage <= 0 {
+			perPage = defaultPerPage
+		}
+
+		if perPage > maxPerPage {
+			perPage = maxPerPage
+		}
+
+		cursor, err := strconv.Atoi(rawCursor)
+		if err != nil {
+			cursor = defaultCursor
+		}
+
+		paging := Paging{
+			Cursor:  cursor,
+			PerPage: perPage,
+		}
+
+		r = a.setCtxPaging(r, paging)
 
 		if next != nil {
 			next.ServeHTTP(w, r)

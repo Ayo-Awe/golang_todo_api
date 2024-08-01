@@ -33,7 +33,7 @@ func (a *Application) buildRoutes() http.Handler {
 	api.Route("/tasks", func(r chi.Router) {
 		r.Use(a.basicAuthMiddleware)
 		r.Post("/", a.CreateTask)
-		r.Get("/", a.GetTasks)
+		r.With(a.Paginate).Get("/", a.GetTasks)
 	})
 
 	r.Mount("/api", api)

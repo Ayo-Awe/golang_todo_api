@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/render"
 	"gopkg.in/guregu/null.v4"
@@ -23,6 +22,20 @@ func (a *Application) getCtxUser(r *http.Request) *User {
 	}
 
 	return user
+}
+
+func (a *Application) setCtxPaging(r *http.Request, paging Paging) *http.Request {
+	ctx := context.WithValue(r.Context(), pagingContextKey, paging)
+	return r.WithContext(ctx)
+}
+
+func (a *Application) getCtxPaging(r *http.Request) Paging {
+	paging, ok := r.Context().Value(pagingContextKey).(Paging)
+	if !ok {
+		panic("missing paging in request context")
+	}
+
+	return paging
 }
 
 func (a *Application) RegisterUser(w http.ResponseWriter, r *http.Request) {
@@ -107,21 +120,9 @@ func (a *Application) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 	user := a.getCtxUser(r)
+	paging := a.getCtxPaging(r)
 
-	rawCursor := r.URL.Query().Get("cursor")
-	rawPerPage := r.URL.Query().Get("per_page")
 	status := r.URL.Query().Get("status")
-
-	perPage, err := strconv.Atoi(rawPerPage)
-	if err != nil {
-		perPage = 20
-	}
-
-	cursor, err := strconv.Atoi(rawCursor)
-	if err != nil {
-		cursor = 2_147_483_647
-	}
-
 	var isCompleted null.Bool
 	if status == "completed" {
 		isCompleted = null.BoolFrom(true)
@@ -129,7 +130,6 @@ func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 		isCompleted = null.BoolFrom(false)
 	}
 
-	paging := Paging{Cursor: cursor, PerPage: perPage}
 	tasks, paginationData, err := a.store.Tasks().GetTasks(r.Context(), user.ID, TaskFilter{IsCompleted: isCompleted}, paging)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerError("An unexpected error occured"))
