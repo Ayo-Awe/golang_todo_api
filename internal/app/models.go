@@ -21,7 +21,7 @@ type ErrorResponse struct {
 type SuccessResponse struct {
 	Status string          `json:"status"`
 	Data   interface{}     `json:"data"`
-	Paging *PaginationData `json:"paging,omitempty"`
+	Paging *PaginationData `json:"paging,omitempty" swaggerignore:"true"`
 }
 
 func (s *SuccessResponse) WithPaginationData(p PaginationData) *SuccessResponse {
@@ -92,18 +92,18 @@ func ErrInternalServerError(msg string) render.Renderer {
 	}
 }
 
-type RegiserUserRequest struct {
+type RegisterUserRequest struct {
 	Email     string `json:"email"`
 	Firstname string `json:"first_name"`
 	Lastname  string `json:"last_name"`
 	Password  string `json:"password"`
 }
 
-func (ru *RegiserUserRequest) Bind(r *http.Request) error {
+func (ru *RegisterUserRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-func (ru *RegiserUserRequest) Validate() error {
+func (ru *RegisterUserRequest) Validate() error {
 	caser := cases.Title(language.English)
 
 	ru.Email = strings.TrimSpace(strings.ToLower(ru.Email))

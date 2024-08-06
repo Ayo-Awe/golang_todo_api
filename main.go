@@ -8,6 +8,12 @@ import (
 	"github.com/ayo-awe/golang_todo_api/internal/database"
 )
 
+//	@title			Task Managment API
+//	@version		1.0
+//	@description	This is a task management api server.
+
+// @securityDefinitions.basic	BasicAuth
+// @BasePath					/api
 func main() {
 	cfg, err := app.LoadConfig()
 	if err != nil {

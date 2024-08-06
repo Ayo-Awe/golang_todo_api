@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/ayo-awe/golang_todo_api/docs"
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Application struct {
@@ -25,6 +27,8 @@ func NewApplication(config *Config, store Store) *Application {
 func (a *Application) buildRoutes() http.Handler {
 	r := chi.NewRouter()
 	api := chi.NewRouter()
+
+	r.Get("/swagger/*", httpSwagger.Handler())
 
 	api.Route("/auth", func(r chi.Router) {
 		r.Post("/signup", a.RegisterUser)

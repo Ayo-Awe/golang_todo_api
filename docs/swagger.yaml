@@ -1,0 +1,271 @@
+basePath: /api
+definitions:
+  app.CreateTaskRequest:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  app.CreateTaskResponse:
+    properties:
+      task:
+        $ref: '#/definitions/app.Task'
+    type: object
+  app.EditTaskResponse:
+    properties:
+      task:
+        $ref: '#/definitions/app.Task'
+    type: object
+  app.ErrorResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  app.PaginationData:
+    properties:
+      item_count:
+        type: integer
+      next_cursor:
+        type: integer
+      per_page:
+        type: integer
+    type: object
+  app.RegisterUserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    type: object
+  app.RegisterUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/app.User'
+    type: object
+  app.SuccessResponse:
+    properties:
+      data: {}
+      status:
+        type: string
+    type: object
+  app.Task:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      is_completed:
+        type: boolean
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  app.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      update_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a task management api server.
+  title: Task Managment API
+  version: "1.0"
+paths:
+  /auth/signup:
+    post:
+      parameters:
+      - description: request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/app.RegisterUserRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/app.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/app.RegisterUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+      summary: Sign up
+      tags:
+      - Auth
+  /tasks:
+    get:
+      operationId: GetTasks
+      parameters:
+      - description: cursor for forward pagination
+        in: query
+        name: cursor
+        type: integer
+      - description: maximum number of tasks to return
+        in: query
+        name: per_page
+        type: integer
+      - description: filter by task status
+        enum:
+        - completed
+        - pending
+        in: query
+        name: status
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/app.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/app.CreateTaskResponse'
+                paging:
+                  $ref: '#/definitions/app.PaginationData'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Get Tasks
+      tags:
+      - Tasks
+    post:
+      operationId: CreateTasks
+      parameters:
+      - description: request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/app.CreateTaskRequest'
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/app.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/app.CreateTaskResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Task
+      tags:
+      - Tasks
+  /tasks/{id}:
+    delete:
+      operationId: DeleteTasks
+      parameters:
+      - description: task id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Delete Tasks
+      tags:
+      - Tasks
+    patch:
+      operationId: EditTasks
+      parameters:
+      - description: task id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/app.EditTaskResponse'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/app.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/app.EditTaskResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/app.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Edit Tasks
+      tags:
+      - Tasks
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

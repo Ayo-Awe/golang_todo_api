@@ -46,7 +46,7 @@ type Task struct {
 	IsCompleted bool      `json:"is_completed"`
 	UserID      int       `json:"user_id"`
 	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"update_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type TaskFilter struct {
@@ -54,7 +54,7 @@ type TaskFilter struct {
 }
 
 type PaginationData struct {
-	NextCursor null.Int `json:"next_cursor"`
+	NextCursor null.Int `json:"next_cursor" swaggertype:"integer"`
 	ItemCount  int      `json:"item_count"`
 	PerPage    int      `json:"per_page"`
 }

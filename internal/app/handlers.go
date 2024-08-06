@@ -40,9 +40,15 @@ func (a *Application) getCtxPaging(r *http.Request) Paging {
 	return paging
 }
 
+// @Summary	Sign up
+// @Tags		Auth
+// @Param		request	body		RegisterUserRequest	true	"request body"
+// @Success	200		{object}	SuccessResponse{data=RegisterUserResponse}
+// @Failure	400,409	{object}	ErrorResponse
+// @Router		/auth/signup [post]
 func (a *Application) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	userRepo := a.store.Users()
-	var payload RegiserUserRequest
+	var payload RegisterUserRequest
 
 	if err := render.Bind(r, &payload); err != nil {
 		render.Render(w, r, ErrBadRequest("Invalid request body"))
@@ -89,6 +95,14 @@ func (a *Application) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewSuccessResponse(res))
 }
 
+// @Summary	Create Task
+// @Tags		Tasks
+// @Id			CreateTasks
+// @Param		request	body		CreateTaskRequest	true	"request body"
+// @Success	201		{object}	SuccessResponse{data=CreateTaskResponse}
+// @Failure	400,401	{object}	ErrorResponse
+// @Security	ApiKeyAuth
+// @Router		/tasks [post]
 func (a *Application) CreateTask(w http.ResponseWriter, r *http.Request) {
 	user := a.getCtxUser(r)
 
@@ -120,6 +134,16 @@ func (a *Application) CreateTask(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewSuccessResponse(CreateTaskResponse{Task: *newTask}))
 }
 
+// @Summary	Get Tasks
+// @Tags		Tasks
+// @Id			GetTasks
+// @Param		cursor		query		int		false	"cursor for forward pagination"
+// @Param		per_page	query		int		false	"maximum number of tasks to return"
+// @Param		status		query		string	false	"filter by task status"	Enums(completed, pending)
+// @Success	201			{object}	SuccessResponse{data=CreateTaskResponse,paging=PaginationData}
+// @Failure	400,401		{object}	ErrorResponse
+// @Security	BasicAuth
+// @Router		/tasks [get]
 func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 	user := a.getCtxUser(r)
 	paging := a.getCtxPaging(r)
@@ -143,6 +167,15 @@ func (a *Application) GetTasks(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, payload)
 }
 
+// @Summary	Edit Tasks
+// @Tags		Tasks
+// @Id			EditTasks
+// @Param		id			path		int					true	"task id"
+// @Param		request		body		EditTaskResponse	true	"request body"
+// @Success	200			{object}	SuccessResponse{data=EditTaskResponse}
+// @Failure	400,401,404	{object}	ErrorResponse
+// @Security	BasicAuth
+// @Router		/tasks/{id} [patch]
 func (a *Application) EditTask(w http.ResponseWriter, r *http.Request) {
 	user := a.getCtxUser(r)
 	rawID := chi.URLParam(r, "id")
@@ -198,6 +231,14 @@ func (a *Application) EditTask(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, NewSuccessResponse(EditTaskResponse{*updatedTask}))
 }
 
+// @Summary	Delete Tasks
+// @Tags		Tasks
+// @Id			DeleteTasks
+// @Param		id	path	int	true	"task id"
+// @Success	204
+// @Failure	401,404	{object}	ErrorResponse
+// @Security	BasicAuth
+// @Router		/tasks/{id} [delete]
 func (a *Application) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	user := a.getCtxUser(r)
 	rawID := chi.URLParam(r, "id")
